@@ -13,7 +13,6 @@ def generate_quote(keyword):
     for i in range(len(res)):
         generated_quote = generate_quote + res[i]['quote']
     return generated_quote
-        
 
 def main(stdscr):
     # Initialize the screen
@@ -24,7 +23,7 @@ def main(stdscr):
 
     # Set up the typing test
     keyword = generate_random_keyword()
-    #expected_text = generate_quote(keyword)
+    # expected_text = generate_quote(keyword)
     # placeholder
     expected_text = "The quick brown fox jumps over the lazy dog"
     typed_text = ""
@@ -41,7 +40,12 @@ def main(stdscr):
     while typed_text != expected_text:
         try:
             key = stdscr.getch()
-            if key == 127:  # Backspace key
+
+            # Check the value of the key (for debugging)
+            print(f"Key pressed: {key}")
+
+            # Handle Backspace key
+            if key == curses.KEY_BACKSPACE or key == 8:
                 if typed_text:
                     typed_text = typed_text[:-1]
                     # Clear the line and refresh
@@ -49,6 +53,8 @@ def main(stdscr):
                     stdscr.clrtoeol()
                     stdscr.addstr(2, 18, typed_text, curses.color_pair(2))
                     stdscr.refresh()
+
+            # Handle alphanumeric characters and space
             elif chr(key).isalpha() or chr(key).isspace():
                 typed_text += chr(key)
 
@@ -59,10 +65,14 @@ def main(stdscr):
                     stdscr.addstr(2, 18 + index, letter, text_color)
 
                 stdscr.refresh()
+
+            # Handle Enter key or Esc key to exit
             elif key == ord('\n') or key == 27:
                 break
+
         except curses.error:
             pass
+
     # Calculate typing speed and display results
     end_time = time.time()
     elapsed_time = end_time - start_time
@@ -72,6 +82,7 @@ def main(stdscr):
     stdscr.addstr(4, 21, f"{characters_per_minute:.2f} CPM", curses.color_pair(2))
     stdscr.addstr(6, 23, f"{words_per_minute:.2f} WPM", curses.color_pair(2))
     stdscr.addstr(8, 18, f"{elapsed_time:.2f} seconds", curses.color_pair(2))
+    stdscr.addstr(10, 5, "Press Enter or Esc to exit.", curses.color_pair(2))
     stdscr.refresh()
 
     # Wait for a key press before exiting
