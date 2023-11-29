@@ -10,6 +10,10 @@ class TypingSpeedTest:
         curses.start_color()
         curses.init_pair(1, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
         curses.init_pair(2, curses.COLOR_CYAN, curses.COLOR_BLACK)
+        curses.init_pair(3, curses.COLOR_GREEN, curses.COLOR_BLACK)  # Correct input (green)
+        curses.init_pair(4, curses.COLOR_RED, curses.COLOR_BLACK)    # Incorrect input (red)
+        curses.init_pair(5, curses.COLOR_WHITE, curses.COLOR_BLACK)  # Expected text (grey)
+
 
         self.keyword = self.generate_random_keyword()
         self.expected_text = "The quick brown fox jumps over the lazy dog"
@@ -31,22 +35,50 @@ class TypingSpeedTest:
         self.stdscr.addstr(y, x, text, curses.color_pair(color_pair))
 
     def handle_backspace(self):
-        self.typed_text = self.typed_text[:-1]
-        self.stdscr.move(2, 18)
-        self.stdscr.clrtoeol()
-        self.display_text(2, 18, self.typed_text, 2)
+        if len(self.typed_text) > 0:
+            # Move the cursor to the correct position before backspacing
+            self.stdscr.move(2, 18 + len(self.typed_text) - 1)
+
+            self.typed_text = self.typed_text[:-1]
+
+            # Clear the current line and redisplay the expected text with the correct color
+            self.stdscr.clrtoeol()
+            for i, letter in enumerate(self.expected_text[:len(self.typed_text)]):
+                text_color = 3 if letter == self.typed_text[i] else 4  # green or red
+                self.display_text(2, 18 + i, letter, text_color)  # Highlight expected text
+
+            # Update the expected text in grey up to the current typing position
+            for i, letter in enumerate(self.expected_text[len(self.typed_text):], start=len(self.typed_text)):
+                self.display_text(2, 18 + i, letter, 5)  # grey
+
+            # Move the cursor to the end of the typed text
+            self.stdscr.move(2, 18 + len(self.typed_text))
+
         self.stdscr.refresh()
+
 
     def handle_input_key(self, key):
         if not self.start_time:
             self.start_time = time.time()
 
-        self.typed_text += chr(key)
+        if key in {curses.KEY_BACKSPACE, 8}:
+            self.handle_backspace()
+            return
 
-        for index, letter in enumerate(self.typed_text):
+        if chr(key).isalpha() or chr(key).isspace():
+            index = len(self.typed_text)
             correct_char = self.expected_text[index] if index < len(self.expected_text) else ' '
-            text_color = 1 if letter == correct_char else 2
-            self.display_text(2, 18 + index, letter, text_color)
+
+            if chr(key) == correct_char:
+                text_color = 3  # green for correct input
+            else:
+                text_color = 4  # red for incorrect input
+
+            self.typed_text += chr(key)
+            self.display_text(2, 18 + index, correct_char, text_color)  # Highlight expected text
+
+            # Move the cursor to the current typing position
+            self.stdscr.move(2, 18 + len(self.typed_text))
 
         self.stdscr.refresh()
 
@@ -54,6 +86,8 @@ class TypingSpeedTest:
             elapsed_time = time.time() - self.start_time
             words_per_minute = len(self.typed_text.split()) / elapsed_time * 60
             self.display_text(6, 23, f"{words_per_minute:.2f} WPM", 2)
+
+
 
     def run(self):
         while self.typed_text != self.expected_text:
