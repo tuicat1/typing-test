@@ -3,78 +3,91 @@ import time
 from random_word import RandomWords
 from quote import quote
 
-def generate_random_keyword():
-    return RandomWords().get_random_word()
+class TypingSpeedTest:
+    def __init__(self, stdscr):
+        self.stdscr = stdscr
+        curses.initscr()
+        curses.start_color()
+        curses.init_pair(1, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
+        curses.init_pair(2, curses.COLOR_CYAN, curses.COLOR_BLACK)
 
-def generate_quote(keyword):
-    return ''.join(quote(keyword, limit=1)[0]['quote'])
+        self.keyword = self.generate_random_keyword()
+        self.expected_text = "The quick brown fox jumps over the lazy dog"
+        self.typed_text = ""
+        self.start_time = None
 
-def display_text(stdscr, y, x, text, color_pair):
-    stdscr.addstr(y, x, text, curses.color_pair(color_pair))
+        self.display_text(0, 5, self.expected_text, 1)
+        self.display_text(4, 5, "Typing Speed: ", 2)
+        self.display_text(6, 5, "Words per Minute: ", 2)
+        self.display_text(8, 5, "Time Elapsed: ", 2)
 
-def handle_backspace(stdscr, typed_text):
-    typed_text = typed_text[:-1]
-    stdscr.move(2, 18)
-    stdscr.clrtoeol()
-    display_text(stdscr, 2, 18, typed_text, 2)
-    stdscr.refresh()
-    return typed_text
+    def generate_random_keyword(self):
+        return RandomWords().get_random_word()
 
-def handle_input_key(stdscr, typed_text, key, expected_text):
-    typed_text += chr(key)
+    def generate_quote(self, keyword):
+        return ''.join(quote(keyword, limit=1)[0]['quote'])
 
-    for index, letter in enumerate(typed_text):
-        correct_char = expected_text[index] if index < len(expected_text) else ' '
-        text_color = 1 if letter == correct_char else 2
-        display_text(stdscr, 2, 18 + index, letter, text_color)
+    def display_text(self, y, x, text, color_pair):
+        self.stdscr.addstr(y, x, text, curses.color_pair(color_pair))
 
-    stdscr.refresh()
-    return typed_text
+    def handle_backspace(self):
+        self.typed_text = self.typed_text[:-1]
+        self.stdscr.move(2, 18)
+        self.stdscr.clrtoeol()
+        self.display_text(2, 18, self.typed_text, 2)
+        self.stdscr.refresh()
+
+    def handle_input_key(self, key):
+        if not self.start_time:
+            self.start_time = time.time()
+
+        self.typed_text += chr(key)
+
+        for index, letter in enumerate(self.typed_text):
+            correct_char = self.expected_text[index] if index < len(self.expected_text) else ' '
+            text_color = 1 if letter == correct_char else 2
+            self.display_text(2, 18 + index, letter, text_color)
+
+        self.stdscr.refresh()
+
+        if self.typed_text == self.expected_text:
+            elapsed_time = time.time() - self.start_time
+            words_per_minute = len(self.typed_text.split()) / elapsed_time * 60
+            self.display_text(6, 23, f"{words_per_minute:.2f} WPM", 2)
+
+    def run(self):
+        while self.typed_text != self.expected_text:
+            try:
+                key = self.stdscr.getch()
+
+                if key in {curses.KEY_BACKSPACE, 8}:
+                    self.handle_backspace()
+
+                elif chr(key).isalpha() or chr(key).isspace():
+                    self.handle_input_key(key)
+
+                elif key in {ord('\n'), 27}:
+                    break
+
+            except curses.error:
+                pass
+
+        end_time = time.time()
+        elapsed_time = end_time - (self.start_time or end_time)
+        words_per_minute = len(self.typed_text.split()) / elapsed_time * 60
+
+        self.display_text(4, 21, f"{len(self.typed_text) / elapsed_time * 60:.2f} CPM", 2)
+        self.display_text(6, 23, f"{words_per_minute:.2f} WPM", 2)
+        self.display_text(8, 18, f"{elapsed_time:.2f} seconds", 2)
+        self.display_text(10, 5, "Press any key to exit.", 2)
+        self.stdscr.refresh()
+
+        self.stdscr.getch()
+
 
 def main(stdscr):
-    curses.initscr()
-    curses.start_color()
-    curses.init_pair(1, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
-    curses.init_pair(2, curses.COLOR_CYAN, curses.COLOR_BLACK)
+    typing_speed_test = TypingSpeedTest(stdscr)
+    typing_speed_test.run()
 
-    keyword = generate_random_keyword()
-    expected_text = "The quick brown fox jumps over the lazy dog"
-    typed_text = ""
-    start_time = time.time()
-
-    display_text(stdscr, 0, 5, expected_text, 1)
-    display_text(stdscr, 2, 5, "Your input: ", 2)
-    display_text(stdscr, 4, 5, "Typing Speed: ", 2)
-    display_text(stdscr, 6, 5, "Words per Minute: ", 2)
-    display_text(stdscr, 8, 5, "Time Elapsed: ", 2)
-
-    while typed_text != expected_text:
-        try:
-            key = stdscr.getch()
-
-            if key in {curses.KEY_BACKSPACE, 8}:
-                typed_text = handle_backspace(stdscr, typed_text)
-
-            elif chr(key).isalpha() or chr(key).isspace():
-                typed_text = handle_input_key(stdscr, typed_text, key, expected_text)
-
-            elif key in {ord('\n'), 27}:
-                break
-
-        except curses.error:
-            pass
-
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    words_per_minute = len(typed_text.split()) / elapsed_time * 60
-    characters_per_minute = len(typed_text) / elapsed_time * 60
-
-    display_text(stdscr, 4, 21, f"{characters_per_minute:.2f} CPM", 2)
-    display_text(stdscr, 6, 23, f"{words_per_minute:.2f} WPM", 2)
-    display_text(stdscr, 8, 18, f"{elapsed_time:.2f} seconds", 2)
-    display_text(stdscr, 10, 5, "Press any key to exit.", 2)
-    stdscr.refresh()
-
-    stdscr.getch()
 
 curses.wrapper(main)
