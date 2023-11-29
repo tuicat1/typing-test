@@ -1,5 +1,19 @@
 import curses
 import time
+from random_word import RandomWords
+from quote import quote
+
+def generate_random_keyword():
+    r = RandomWords()
+    return r.get_random_word()
+
+def generate_quote(keyword):
+    res = quote(keyword, limit=1)
+    generated_quote = ""
+    for i in range(len(res)):
+        generated_quote = generate_quote + res[i]['quote']
+    return generated_quote
+        
 
 def main(stdscr):
     # Initialize the screen
@@ -9,12 +23,15 @@ def main(stdscr):
     curses.init_pair(2, curses.COLOR_CYAN, curses.COLOR_BLACK)
 
     # Set up the typing test
-    expected_text = "speed"
+    keyword = generate_random_keyword()
+    #expected_text = generate_quote(keyword)
+    # placeholder
+    expected_text = "The quick brown fox jumps over the lazy dog"
     typed_text = ""
     start_time = time.time()
 
     # Set up the layout
-    stdscr.addstr(0, 5, f"Type the word: {expected_text}", curses.color_pair(1))
+    stdscr.addstr(0, 5, f"{expected_text}", curses.color_pair(1))
     stdscr.addstr(2, 5, "Your input: ", curses.color_pair(2))
     stdscr.addstr(4, 5, "Typing Speed: ", curses.color_pair(2))
     stdscr.addstr(6, 5, "Words per Minute: ", curses.color_pair(2))
@@ -23,22 +40,29 @@ def main(stdscr):
     # Main loop to get user input
     while typed_text != expected_text:
         try:
-            key = stdscr.getkey()
-            if key.isalpha() or key.isspace():
-                typed_text += key
+            key = stdscr.getch()
+            if key == 127:  # Backspace key
+                if typed_text:
+                    typed_text = typed_text[:-1]
+                    # Clear the line and refresh
+                    stdscr.move(2, 18)
+                    stdscr.clrtoeol()
+                    stdscr.addstr(2, 18, typed_text, curses.color_pair(2))
+                    stdscr.refresh()
+            elif chr(key).isalpha() or chr(key).isspace():
+                typed_text += chr(key)
 
                 # Display typed text with color coding
                 for index, letter in enumerate(typed_text):
-                    correct_char = expected_text[index]
+                    correct_char = expected_text[index] if index < len(expected_text) else ' '
                     text_color = curses.color_pair(1) if letter == correct_char else curses.color_pair(2)
                     stdscr.addstr(2, 18 + index, letter, text_color)
 
                 stdscr.refresh()
-            elif key == '\n':
+            elif key == ord('\n') or key == 27:
                 break
         except curses.error:
             pass
-
     # Calculate typing speed and display results
     end_time = time.time()
     elapsed_time = end_time - start_time
