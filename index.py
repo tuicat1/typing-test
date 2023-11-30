@@ -74,7 +74,9 @@ class TypingSpeedTest:
         elif chr(key).isalpha() or chr(key).isspace():
             # Move the cursor one place ahead before handling the input
             cursor_x = 18 + len(self.typed_text)
-            self.stdscr.move(2, cursor_x)
+            self.stdscr.move(2, cursor_x+1)
+            self.stdscr.refresh()  # Refresh the screen to immediately move the cursor
+            time.sleep(0.05)  # Add a small delay to ensure consistent cursor movement
             self.handle_valid_input(chr(key), key)
 
     def handle_valid_input(self, input_char, key):
