@@ -11,7 +11,7 @@ class TypingSpeedTest:
         curses.init_pair(1, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
         curses.init_pair(2, curses.COLOR_CYAN, curses.COLOR_BLACK)
         curses.init_pair(3, curses.COLOR_GREEN, curses.COLOR_BLACK)  # Correct input (green)
-        curses.init_pair(4, curses.COLOR_RED, curses.COLOR_BLACK)    # Incorrect input (red)
+        curses.init_pair(4, curses.COLOR_WHITE, curses.COLOR_RED)    # Incorrect input (red)
         curses.init_pair(5, curses.COLOR_WHITE, curses.COLOR_BLACK)  # Expected text (grey)
 
 
@@ -21,6 +21,7 @@ class TypingSpeedTest:
         self.start_time = None
 
         self.display_text(0, 5, self.expected_text, 1)
+        self.display_expected_text()
         self.display_text(4, 5, "Typing Speed: ", 2)
         self.display_text(6, 5, "Words per Minute: ", 2)
         self.display_text(8, 5, "Time Elapsed: ", 2)
@@ -34,10 +35,19 @@ class TypingSpeedTest:
     def display_text(self, y, x, text, color_pair):
         self.stdscr.addstr(y, x, text, curses.color_pair(color_pair))
 
+    def display_expected_text(self):
+        for i, letter in enumerate(self.expected_text):
+            text_color = 5  # grey
+            self.display_text(2, 18 + i, letter, text_color)
+
+        # Move the cursor to the beginning of the expected text
+        self.stdscr.move(2, 18)
+            
     def handle_backspace(self):
         if len(self.typed_text) > 0:
             # Move the cursor to the correct position before backspacing
-            self.stdscr.move(2, 18 + len(self.typed_text) - 1)
+            cursor_x = 18 + len(self.typed_text) - 1
+            self.stdscr.move(2, cursor_x)
 
             self.typed_text = self.typed_text[:-1]
 
@@ -52,7 +62,7 @@ class TypingSpeedTest:
                 self.display_text(2, 18 + i, letter, 5)  # grey
 
             # Move the cursor to the end of the typed text
-            self.stdscr.move(2, 18 + len(self.typed_text))
+            self.stdscr.move(2, cursor_x)
 
         self.stdscr.refresh()
 
@@ -72,13 +82,17 @@ class TypingSpeedTest:
             if chr(key) == correct_char:
                 text_color = 3  # green for correct input
             else:
-                text_color = 4  # red for incorrect input
+                if correct_char.isspace():  # Check if the correct character is a space
+                    text_color = 4  # red for incorrect input (even for spaces)
+                else:
+                    text_color = 4 if chr(key) != ' ' else 3  # red for incorrect input (except for spaces)
 
             self.typed_text += chr(key)
             self.display_text(2, 18 + index, correct_char, text_color)  # Highlight expected text
 
             # Move the cursor to the current typing position
             self.stdscr.move(2, 18 + len(self.typed_text))
+
 
         self.stdscr.refresh()
 
