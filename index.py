@@ -85,7 +85,7 @@ class TypingSpeedTest:
                 if correct_char.isspace():  # Check if the correct character is a space
                     text_color = 4  # red for incorrect input (even for spaces)
                 else:
-                    text_color = 4 if chr(key) != ' ' else 3  # red for incorrect input (except for spaces)
+                    text_color = 4 if chr(key) != ' ' else 4  # red for incorrect input (except for spaces)
 
             self.typed_text += chr(key)
             self.display_text(2, 18 + index, correct_char, text_color)  # Highlight expected text
