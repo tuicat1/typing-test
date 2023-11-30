@@ -73,33 +73,32 @@ class TypingSpeedTest:
 
         if key in {curses.KEY_BACKSPACE, 8}:
             self.handle_backspace()
-            return
+        elif chr(key).isalpha() or chr(key).isspace():
+            self.handle_valid_input(chr(key), key)
 
-        if chr(key).isalpha() or chr(key).isspace():
-            index = len(self.typed_text)
-            correct_char = self.expected_text[index] if index < len(self.expected_text) else ' '
+    def handle_valid_input(self, input_char, key):
+        index = len(self.typed_text)
+        correct_char = self.expected_text[index] if index < len(self.expected_text) else ' '
 
-            if chr(key) == correct_char:
-                text_color = 3  # green for correct input
-            else:
-                if correct_char.isspace():  # Check if the correct character is a space
-                    text_color = 4  # red for incorrect input (even for spaces)
-                else:
-                    text_color = 4 if chr(key) != ' ' else 4  # red for incorrect input (except for spaces)
+        if input_char == correct_char:
+            text_color = 3  # green for correct input
+        else:
+            text_color = 4 if input_char != ' ' or correct_char.isspace() else 4  # red for incorrect input
 
-            self.typed_text += chr(key)
-            self.display_text(2, 18 + index, correct_char, text_color)  # Highlight expected text
+        self.typed_text += input_char
+        self.display_text(2, 18 + index, correct_char, text_color)  # Highlight expected text
 
-            # Move the cursor to the current typing position
-            self.stdscr.move(2, 18 + len(self.typed_text))
+        # Move the cursor to the current typing position
+        self.stdscr.move(2, 18 + len(self.typed_text))
 
+        self.update_typing_speed()
 
-        self.stdscr.refresh()
-
+    def update_typing_speed(self):
         if self.typed_text == self.expected_text:
             elapsed_time = time.time() - self.start_time
             words_per_minute = len(self.typed_text.split()) / elapsed_time * 60
             self.display_text(6, 23, f"{words_per_minute:.2f} WPM", 2)
+
 
 
 
