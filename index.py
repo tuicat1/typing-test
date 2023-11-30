@@ -14,7 +14,6 @@ class TypingSpeedTest:
         curses.init_pair(4, curses.COLOR_WHITE, curses.COLOR_RED)    # Incorrect input (red)
         curses.init_pair(5, curses.COLOR_WHITE, curses.COLOR_BLACK)  # Expected text (grey)
 
-
         self.keyword = self.generate_random_keyword()
         self.expected_text = "The quick brown fox jumps over the lazy dog"
         self.typed_text = ""
@@ -42,7 +41,7 @@ class TypingSpeedTest:
 
         # Move the cursor to the beginning of the expected text
         self.stdscr.move(2, 18)
-            
+
     def handle_backspace(self):
         if len(self.typed_text) > 0:
             # Move the cursor to the correct position before backspacing
@@ -62,10 +61,9 @@ class TypingSpeedTest:
                 self.display_text(2, 18 + i, letter, 5)  # grey
 
             # Move the cursor to the end of the typed text
-            self.stdscr.move(2, cursor_x)
+            self.stdscr.move(2, cursor_x - 1)  # Move the cursor back one place
 
         self.stdscr.refresh()
-
 
     def handle_input_key(self, key):
         if not self.start_time:
@@ -74,6 +72,9 @@ class TypingSpeedTest:
         if key in {curses.KEY_BACKSPACE, 8}:
             self.handle_backspace()
         elif chr(key).isalpha() or chr(key).isspace():
+            # Move the cursor one place ahead before handling the input
+            cursor_x = 18 + len(self.typed_text)
+            self.stdscr.move(2, cursor_x)
             self.handle_valid_input(chr(key), key)
 
     def handle_valid_input(self, input_char, key):
@@ -87,10 +88,6 @@ class TypingSpeedTest:
 
         self.typed_text += input_char
         self.display_text(2, 18 + index, correct_char, text_color)  # Highlight expected text
-
-        # Move the cursor to the current typing position
-        self.stdscr.move(2, 18 + len(self.typed_text))
-
         self.update_typing_speed()
 
     def update_typing_speed(self):
@@ -99,9 +96,6 @@ class TypingSpeedTest:
             words_per_minute = len(self.typed_text.split()) / elapsed_time * 60
             self.display_text(6, 23, f"{words_per_minute:.2f} WPM", 2)
 
-
-
-
     def run(self):
         while self.typed_text != self.expected_text:
             try:
@@ -109,10 +103,8 @@ class TypingSpeedTest:
 
                 if key in {curses.KEY_BACKSPACE, 8}:
                     self.handle_backspace()
-
                 elif chr(key).isalpha() or chr(key).isspace():
                     self.handle_input_key(key)
-
                 elif key in {ord('\n'), 27}:
                     break
 
@@ -131,10 +123,9 @@ class TypingSpeedTest:
 
         self.stdscr.getch()
 
-
 def main(stdscr):
+    curses.curs_set(1)  # Set cursor visibility to normal
     typing_speed_test = TypingSpeedTest(stdscr)
     typing_speed_test.run()
-
 
 curses.wrapper(main)
