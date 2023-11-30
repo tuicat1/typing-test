@@ -22,6 +22,8 @@ class TypingSpeedTest:
         self.display_text(0, 5, self.expected_text, 1)
         self.display_expected_text()
         self.display_text(6, 5, "Words per Minute: ", 2)
+        retry_message = "Press Tab to retry"
+        self.display_text(10, 5, retry_message, 2)
 
     def generate_random_keyword(self):
         return RandomWords().get_random_word()
