@@ -45,7 +45,7 @@ class TypingSpeedTest:
     def handle_backspace(self):
         if len(self.typed_text) > 0:
             # Move the cursor to the correct position before backspacing
-            cursor_x = 18 + len(self.typed_text) - 1
+            cursor_x = 18 + len(self.typed_text)
             self.stdscr.move(2, cursor_x)
 
             self.typed_text = self.typed_text[:-1]
@@ -63,13 +63,17 @@ class TypingSpeedTest:
             # Move the cursor to the end of the typed text
             self.stdscr.move(2, cursor_x - 1)  # Move the cursor back one place
 
+            # Debugging: Print cursor position for verification
+            print("Cursor Position After Backspace:", cursor_x - 1)
+
+        # Refresh the display
         self.stdscr.refresh()
 
     def handle_input_key(self, key):
         if not self.start_time:
             self.start_time = time.time()
 
-        if key in {curses.KEY_BACKSPACE, 8}:
+        if key in {curses.KEY_BACKSPACE, 8}:           
             self.handle_backspace()
         elif chr(key).isalpha() or chr(key).isspace():
             # Move the cursor one place ahead before handling the input
