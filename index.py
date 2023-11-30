@@ -21,9 +21,7 @@ class TypingSpeedTest:
 
         self.display_text(0, 5, self.expected_text, 1)
         self.display_expected_text()
-        self.display_text(4, 5, "Typing Speed: ", 2)
         self.display_text(6, 5, "Words per Minute: ", 2)
-        self.display_text(8, 5, "Time Elapsed: ", 2)
 
     def generate_random_keyword(self):
         return RandomWords().get_random_word()
@@ -103,11 +101,13 @@ class TypingSpeedTest:
             self.display_text(6, 23, f"{words_per_minute:.2f} WPM", 2)
 
     def run(self):
-        while self.typed_text != self.expected_text:
+        while True:
             try:
                 key = self.stdscr.getch()
 
-                if key in {curses.KEY_BACKSPACE, 8}:
+                if key == 9:  # Check for the tab key
+                    self.reset_typing_test()
+                elif key in {curses.KEY_BACKSPACE, 8}:
                     self.handle_backspace()
                 elif chr(key).isalpha() or chr(key).isspace():
                     self.handle_input_key(key)
@@ -116,18 +116,25 @@ class TypingSpeedTest:
 
             except curses.error:
                 pass
-
+            
         end_time = time.time()
         elapsed_time = end_time - (self.start_time or end_time)
         words_per_minute = len(self.typed_text.split()) / elapsed_time * 60
 
-        self.display_text(4, 21, f"{len(self.typed_text) / elapsed_time * 60:.2f} CPM", 2)
         self.display_text(6, 23, f"{words_per_minute:.2f} WPM", 2)
-        self.display_text(8, 18, f"{elapsed_time:.2f} seconds", 2)
         self.display_text(10, 5, "Press any key to exit.", 2)
         self.stdscr.refresh()
 
         self.stdscr.getch()
+
+    def reset_typing_test(self):
+        # Reset all relevant variables and display
+        self.typed_text = ""
+        self.start_time = None
+
+        self.display_text(2, 18, " " * len(self.expected_text), 5)  # Clear typed text
+        self.display_expected_text()
+        self.display_text(6, 23, " " * 10, 2)  # Clear WPM display
 
 def main(stdscr):
     curses.curs_set(1)  # Set cursor visibility to normal
