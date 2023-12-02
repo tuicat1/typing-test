@@ -102,14 +102,13 @@ class TypingSpeedTest:
 
         if key in {curses.KEY_BACKSPACE, 8}:
             self.handle_backspace()
-        elif chr(key).isalnum() or chr(key).isspace() or chr(key) in ";,.'?":
+        elif chr(key).isalnum() or chr(key).isspace() or ord(chr(key)) in [59, 44, 46, 39, 63]:
             # Move the cursor one place ahead before handling the input
             cursor_x = 18 + len(self.typed_text)
             self.stdscr.move(2, cursor_x + 1)
-            self.stdscr.refresh()  # Refresh the screen to immediately move the cursor
-            time.sleep(0.05)  # Add a small delay to ensure consistent cursor movement
             self.handle_valid_input(chr(key), key)
             self.print_realtime_wpm()
+
 
             
     def handle_valid_input(self, input_char, key):
@@ -140,7 +139,7 @@ class TypingSpeedTest:
                     self.reset_typing_test()
                 elif key in {curses.KEY_BACKSPACE, 8}:
                     self.handle_backspace()
-                elif chr(key).isalpha() or chr(key).isspace():
+                elif chr(key).isalpha() or chr(key).isspace() or ord(chr(key)) in [59, 44, 46, 39, 63]:
                     self.handle_input_key(key)
                 elif key in {ord('\n'), 27}:
                     break
