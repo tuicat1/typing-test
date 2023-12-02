@@ -15,7 +15,7 @@ class TypingSpeedTest:
         curses.init_pair(5, curses.COLOR_WHITE, curses.COLOR_BLACK)  # Expected text (grey)
 
         self.keyword = self.generate_random_keyword()
-        self.expected_text = self.generate_quote(self.keyword)
+        self.expected_text = self.generate_quote(self.keyword)[0:100]
         self.typed_text = ""
         self.start_time = None
 
@@ -29,7 +29,13 @@ class TypingSpeedTest:
         return RandomWords().get_random_word()
 
     def generate_quote(self, keyword):
-        return ''.join(quote(keyword, limit=1)[0]['quote'])
+        quotes = quote(keyword, limit=1)
+        if quotes and quotes[0] and 'quote' in quotes[0]:
+            return ''.join(quotes[0]['quote'])
+        else:
+            # Handle the case where the quote retrieval was unsuccessful
+            return "The quick brown fox jumps over the lazy dog"
+
 
     def display_text(self, y, x, text, color_pair):
         self.stdscr.addstr(y, x, text, curses.color_pair(color_pair))
@@ -94,16 +100,17 @@ class TypingSpeedTest:
         if not self.start_time:
             self.start_time = time.time()
 
-        if key in {curses.KEY_BACKSPACE, 8}:           
+        if key in {curses.KEY_BACKSPACE, 8}:
             self.handle_backspace()
-        elif chr(key).isalpha() or chr(key).isspace():
+        elif chr(key).isalnum() or chr(key).isspace() or chr(key) in ";,.'?":
             # Move the cursor one place ahead before handling the input
             cursor_x = 18 + len(self.typed_text)
-            self.stdscr.move(2, cursor_x+1)
+            self.stdscr.move(2, cursor_x + 1)
             self.stdscr.refresh()  # Refresh the screen to immediately move the cursor
             time.sleep(0.05)  # Add a small delay to ensure consistent cursor movement
             self.handle_valid_input(chr(key), key)
             self.print_realtime_wpm()
+
             
     def handle_valid_input(self, input_char, key):
         index = len(self.typed_text)
