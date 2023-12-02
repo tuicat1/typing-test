@@ -2,6 +2,7 @@ import curses
 import time
 from random_word import RandomWords
 from quote import quote
+import threading
 
 class TypingSpeedTest:
     def __init__(self, stdscr):
@@ -48,33 +49,27 @@ class TypingSpeedTest:
         # Move the cursor to the beginning of the expected text
         self.stdscr.move(2, 18)
         
-    def print_realtime_wpm(self):
-        """Print realtime wpm during the test."""
-        current_wpm = 0
-        total_time = self.get_elapsed_minutes_since_first_keypress(self.start_time)
-        if total_time != 0:
-            words = self.typed_text.split()
-            word_count = len(words)
-            current_wpm = word_count / total_time
+    def start_wpm_timer(self):
+        def update_wpm():
+            print("WPM update thread started")
+            while self.start_time is not None:
+                elapsed_time = time.time() - self.start_time
+                words_per_minute = len(self.typed_text.split()) / elapsed_time * 60
+                wpm_text = f"{words_per_minute:.2f} WPM"
+                
+                # Get the width of the console
+                height, width = self.stdscr.getmaxyx()
+                
+                # Calculate the position of the WPM text
+                x_position = width - len(wpm_text) - 2  # -2 for a little padding from the right edge
+                
+                self.display_text(0, x_position, wpm_text, 2)
+                print("WPM updated")  # Debugging print statement
+                time.sleep(1)
 
-        # Save the current cursor position
-        y, x = self.stdscr.getyx()
+        print("Starting WPM timer")  # Debugging print statement
+        threading.Thread(target=update_wpm, daemon=True).start()
 
-        # Update the WPM display
-        self.stdscr.addstr(
-            0,
-            self.stdscr.getmaxyx()[1] - 14,
-            f" {current_wpm:.2f} WPM ",
-            curses.color_pair(2),  # CYAN
-        )
-
-        # Restore the cursor position
-        self.stdscr.move(y, x)
-
-        
-    def get_elapsed_minutes_since_first_keypress(self, start_time):
-        """Return the elapsed minutes since the first keypress."""
-        return (time.time() - start_time) / 60
 
 
     def handle_backspace(self):
@@ -110,12 +105,12 @@ class TypingSpeedTest:
 
         if key in {curses.KEY_BACKSPACE, 8}:
             self.handle_backspace()
-        elif chr(key).isalnum() or chr(key).isspace() or ord(chr(key)) in [59, 44, 46, 39, 63]:
-            # Move the cursor one place ahead before handling the input
-            cursor_x = 18 + len(self.typed_text)
-            self.stdscr.move(2, cursor_x + 1)
+        elif chr(key).isalnum() or chr(key).isspace() or ord(chr(key)) in [59, 44, 46, 39, 63, 71]:
             self.handle_valid_input(chr(key), key)
-            self.print_realtime_wpm()
+            
+            # Move the cursor one place ahead after handling the input
+            cursor_x = 18 + len(self.typed_text) + 1
+            self.stdscr.move(2, cursor_x)
 
 
             
@@ -137,11 +132,15 @@ class TypingSpeedTest:
             elapsed_time = time.time() - self.start_time
             words_per_minute = len(self.typed_text.split()) / elapsed_time * 60
             self.display_text(6, 23, f"{words_per_minute:.2f} WPM", 2)
+            print(f"WPM updated to {words_per_minute:.2f}")  # Debugging print statement
 
     def run(self):
         while True:
             try:
                 key = self.stdscr.getch()
+                if self.start_time is None:
+                    self.start_time = time.time()
+                    self.start_wpm_timer()  # Ensure the timer starts
 
                 if key == 9:  # Check for the tab key
                     self.reset_typing_test()
@@ -154,7 +153,7 @@ class TypingSpeedTest:
 
             except curses.error:
                 pass
-            
+
         end_time = time.time()
         elapsed_time = end_time - (self.start_time or end_time)
         words_per_minute = len(self.typed_text.split()) / elapsed_time * 60
@@ -180,3 +179,4 @@ def main(stdscr):
     typing_speed_test.run()
 
 curses.wrapper(main)
+
