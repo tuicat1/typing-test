@@ -57,12 +57,20 @@ class TypingSpeedTest:
             word_count = len(words)
             current_wpm = word_count / total_time
 
+        # Save the current cursor position
+        y, x = self.stdscr.getyx()
+
+        # Update the WPM display
         self.stdscr.addstr(
             0,
             self.stdscr.getmaxyx()[1] - 14,
             f" {current_wpm:.2f} WPM ",
             curses.color_pair(2),  # CYAN
         )
+
+        # Restore the cursor position
+        self.stdscr.move(y, x)
+
         
     def get_elapsed_minutes_since_first_keypress(self, start_time):
         """Return the elapsed minutes since the first keypress."""
