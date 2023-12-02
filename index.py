@@ -15,7 +15,7 @@ class TypingSpeedTest:
         curses.init_pair(5, curses.COLOR_WHITE, curses.COLOR_BLACK)  # Expected text (grey)
 
         self.keyword = self.generate_random_keyword()
-        self.expected_text = "The quick brown fox jumps over the lazy dog"
+        self.expected_text = self.generate_quote(self.keyword)
         self.typed_text = ""
         self.start_time = None
 
@@ -41,6 +41,27 @@ class TypingSpeedTest:
 
         # Move the cursor to the beginning of the expected text
         self.stdscr.move(2, 18)
+        
+    def print_realtime_wpm(self):
+        """Print realtime wpm during the test."""
+        current_wpm = 0
+        total_time = self.get_elapsed_minutes_since_first_keypress(self.start_time)
+        if total_time != 0:
+            words = self.typed_text.split()
+            word_count = len(words)
+            current_wpm = word_count / total_time
+
+        self.stdscr.addstr(
+            0,
+            self.stdscr.getmaxyx()[1] - 14,
+            f" {current_wpm:.2f} WPM ",
+            curses.color_pair(2),  # CYAN
+        )
+        
+    def get_elapsed_minutes_since_first_keypress(self, start_time):
+        """Return the elapsed minutes since the first keypress."""
+        return (time.time() - start_time) / 60
+
 
     def handle_backspace(self):
         if len(self.typed_text) > 0:
@@ -82,7 +103,8 @@ class TypingSpeedTest:
             self.stdscr.refresh()  # Refresh the screen to immediately move the cursor
             time.sleep(0.05)  # Add a small delay to ensure consistent cursor movement
             self.handle_valid_input(chr(key), key)
-
+            self.print_realtime_wpm()
+            
     def handle_valid_input(self, input_char, key):
         index = len(self.typed_text)
         correct_char = self.expected_text[index] if index < len(self.expected_text) else ' '
