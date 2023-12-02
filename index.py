@@ -65,7 +65,7 @@ class TypingSpeedTest:
                 
                 self.display_text(0, x_position, wpm_text, 2)
                 print("WPM updated")  # Debugging print statement
-                time.sleep(1)
+            
 
         print("Starting WPM timer")  # Debugging print statement
         threading.Thread(target=update_wpm, daemon=True).start()
@@ -109,7 +109,7 @@ class TypingSpeedTest:
             self.handle_valid_input(chr(key), key)
             
             # Move the cursor one place ahead after handling the input
-            cursor_x = 18 + len(self.typed_text) + 1
+            cursor_x = 18 + len(self.typed_text) 
             self.stdscr.move(2, cursor_x)
 
 
